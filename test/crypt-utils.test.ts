@@ -15,11 +15,12 @@
  */
 
 // @ts-ignore
-import * as HDKey from 'hdkey'
+// import * as HDKey from 'hdkey'
 import * as chai from 'chai'
 import * as chaiAsPromised from 'chai-as-promised'
 import * as sinon from 'sinon'
 import { CryptUtil, LocalCryptUtils } from '../src'
+import { ethers } from 'ethers'
 
 const assert = chai.assert
 
@@ -61,23 +62,127 @@ describe('cryptutils class', () => {
 
   it('should import a masterprivatekey', () => {
     // Arrange
-    const stub = sinon.stub(HDKey, 'fromExtendedKey')
-    const privKey = 'fromExtendedKey'
+    const stub = sinon.stub(ethers.utils.HDNode, 'fromExtendedKey')
+    const privKey = 'xprv9s21ZrQH143K4Hahxy3chUqrrHbCynU5CcnRg9xijCvCG4f3AJb1PgiaXpjik6pDnT1qRmf3V3rzn26UNMWDjfEpUKL4ouy6t5ZVa4GAJVG'
     // Act
     sut.importMasterPrivateKey(privKey)
     // Assert
     assert.isTrue(stub.calledOnceWithExactly(privKey))
   })
 
-  it('should throw an error if hdkey cannot create a masterprivatekey', () => {
+  it('should throw an error if hdnode cannot create a masterprivatekey', () => {
     // Arrange
-    sinon.stub(HDKey, 'fromMasterSeed').returns(false)
+    sinon.stub(ethers.utils.HDNode, 'fromSeed')
     const helper = function () {
       sut.createMasterPrivateKey()
     }
 
     // Act / Assert
     assert.throws(helper, 'Could not create master private key')
+  })
+
+  it('should throw if function exportMasterPrivateKey called without instantiating a masterprivatekey', () => {
+    // Arrange
+    const sut = new LocalCryptUtils()
+
+    // Act
+    const helper = () => {
+      sut.exportMasterPrivateKey()
+    }
+
+    // Assert
+    assert.throws(helper, 'No MasterPrivateKey instantiated')
+  })
+
+  it('should throw if function derivePrivateKey called without instantiating a masterprivatekey', () => {
+    // Arrange
+    const sut = new LocalCryptUtils()
+
+    // Act
+    const helper = () => {
+      sut.derivePrivateKey(0, 0)
+    }
+
+    // Assert
+    assert.throws(helper, 'No MasterPrivateKey instantiated')
+  })
+
+  it('should throw if function derivePublicKey called without instantiating a masterprivatekey', () => {
+    // Arrange
+    const sut = new LocalCryptUtils()
+
+    // Act
+    const helper = () => {
+      sut.derivePublicKey(0, 0)
+    }
+
+    // Assert
+    assert.throws(helper, 'No MasterPrivateKey instantiated')
+  })
+
+  it('should throw if function deriveAddress called without instantiating a masterprivatekey', () => {
+    // Arrange
+    const sut = new LocalCryptUtils()
+
+    // Act
+    const helper = () => {
+      sut.deriveAddress(0, 0)
+    }
+
+    // Assert
+    assert.throws(helper, 'No MasterPrivateKey instantiated')
+  })
+
+  it('should throw if function derivePublicExtendedKey called without instantiating a masterprivatekey', () => {
+    // Arrange
+    const sut = new LocalCryptUtils()
+
+    // Act
+    const helper = () => {
+      sut.derivePublicExtendedKey(0, 0)
+    }
+
+    // Assert
+    assert.throws(helper, 'No MasterPrivateKey instantiated')
+  })
+
+  it('should throw if function derivePublicExtendedKeyFromPath called without instantiating a masterprivatekey', () => {
+    // Arrange
+    const sut = new LocalCryptUtils()
+
+    // Act
+    const helper = () => {
+      sut.derivePublicExtendedKeyFromPath('')
+    }
+
+    // Assert
+    assert.throws(helper, 'No MasterPrivateKey instantiated')
+  })
+
+  it('should throw if function derivePrivateKeyFromPath called without instantiating a masterprivatekey', () => {
+    // Arrange
+    const sut = new LocalCryptUtils()
+
+    // Act
+    const helper = () => {
+      sut.derivePrivateKeyFromPath('')
+    }
+
+    // Assert
+    assert.throws(helper, 'No MasterPrivateKey instantiated')
+  })
+
+  it('should throw if function signPayload called without instantiating a masterprivatekey', () => {
+    // Arrange
+    const sut = new LocalCryptUtils()
+
+    // Act
+    const helper = () => {
+      sut.signPayload(0, 0, '')
+    }
+
+    // Assert
+    assert.throws(helper, 'No MasterPrivateKey instantiated')
   })
 
   it('should should return a corresponding private extended key', () => {

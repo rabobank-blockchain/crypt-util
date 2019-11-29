@@ -1,6 +1,6 @@
 {
   "name": "crypt-util",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Lib providing cryptographic functions",
   "engines": {
     "node": ">=8.15.0",
@@ -67,9 +67,6 @@
     "typescript": "^3.2.4"
   },
   "dependencies": {
-    "brorand": "^1.1.0",
-    "hdkey": "^1.1.1",
-    "js-sha3": "^0.8.0",
-    "secp256k1": "^3.7.0"
+    "ethers": "^4.0.40"
   }
 }
