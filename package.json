@@ -67,6 +67,6 @@
     "typescript": "^3.2.4"
   },
   "dependencies": {
-    "ethers": "^4.0.40"
+    "ethers": "^4.0.41"
   }
 }
