@@ -158,7 +158,7 @@ export class LocalCryptUtils implements CryptUtil {
       const messageBytes = ethers.utils.toUtf8Bytes(message)
       const messageDigest = ethers.utils.keccak256(messageBytes)
       const signingKey = new ethers.utils.SigningKey(childPrivateKey)
-      return ethers.utils.joinSignature(signingKey.signDigest(ethers.utils.hashMessage(messageDigest)))
+      return ethers.utils.joinSignature(signingKey.signDigest(messageDigest))
     } else {
       throw (new Error('No MasterPrivateKey instantiated'))
     }
@@ -171,10 +171,15 @@ export class LocalCryptUtils implements CryptUtil {
    * @param signature the signature from the signer
    * @return boolean whether the payload is valid or not
    */
-  public verifyPayload (message: string, address: string, signature: string): boolean {
+  public verifyPayload (message: string, addressOrPublicKey: string, signature: string): boolean {
     const messageBytes = ethers.utils.toUtf8Bytes(message)
     const messageDigest = ethers.utils.keccak256(messageBytes)
-    return ethers.utils.verifyMessage(messageDigest, signature) === address
+    try {
+      const address: string = (addressOrPublicKey.length > 42) ? ethers.utils.computeAddress(addressOrPublicKey) : addressOrPublicKey
+      return ethers.utils.recoverAddress(messageDigest, signature) === address
+    } catch {
+      return false
+    }
   }
 
   /**

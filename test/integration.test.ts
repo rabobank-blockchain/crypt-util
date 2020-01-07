@@ -34,7 +34,8 @@ describe('cryptutils integration with libs', () => {
   const derivedAccount = 314
   const derivedKeyId = 152679
   const privExtKey = 'xprv9s21ZrQH143K4Hahxy3chUqrrHbCynU5CcnRg9xijCvCG4f3AJb1PgiaXpjik6pDnT1qRmf3V3rzn26UNMWDjfEpUKL4ouy6t5ZVa4GAJVG'
-  const signature = '0xf2850532bc5aa6713e5b2b486791ea249e8720cc5286ab7559e75fdf130ef607461af0fc4fb893b7343365d809b1c2fbec1b120365a058c5a0cc6c56cb292baf1b'
+  const signature = '0x7129ab6ac278c4d1ab120292ada929b1638eb654a11e6929c2490898bc2b4e6f15a9626d51f1aa2717356fc0d39ae8b9f83beeee061655e16de4f76d683da44d1b'
+  const publicKey = '0x04dc07a3c64c076aab718c0392c7598a03eb669b7bd94a88a178846833c5b1d5724b9bf9082f1efbda048e0ca1bdfa075f7c10a35d89d4cf5a032fa7627a0a6f34'
   const address = '0x6Cb8b9B321cfefECB9a0e5B3EB0536962289711a'
   const payload = 'This is a test'
   let sut = new LocalCryptUtils()
@@ -75,11 +76,11 @@ describe('cryptutils integration with libs', () => {
 
   it('should successfully verify a valid signature', () => {
     // Arrange
-    sut.importMasterPrivateKey(privExtKey)
-
+    sut.createMasterPrivateKey()
+    const pubKey = sut.derivePublicKey(account, keyId)
     // Act
-    const verified = sut.verifyPayload(payload, address, signature)
-
+    const signature = sut.signPayload(account, keyId, payload)
+    const verified = sut.verifyPayload(payload, pubKey, signature)
     // Assert
     assert.isTrue(verified)
   })
@@ -155,7 +156,7 @@ describe('cryptutils integration with libs', () => {
     // Act
     const signature = sut.signPayload(derivedAccount, derivedKeyId, payload)
     // Assert
-    assert.strictEqual(signature, '0xf2850532bc5aa6713e5b2b486791ea249e8720cc5286ab7559e75fdf130ef607461af0fc4fb893b7343365d809b1c2fbec1b120365a058c5a0cc6c56cb292baf1b')
+    assert.strictEqual(signature, '0x7129ab6ac278c4d1ab120292ada929b1638eb654a11e6929c2490898bc2b4e6f15a9626d51f1aa2717356fc0d39ae8b9f83beeee061655e16de4f76d683da44d1b')
   })
 
   it('should verify signature correct for certain payload', () => {

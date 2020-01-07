@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// @ts-ignore
-// import * as HDKey from 'hdkey'
 import * as chai from 'chai'
 import * as chaiAsPromised from 'chai-as-promised'
 import * as sinon from 'sinon'
