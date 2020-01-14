@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Coöperatieve Rabobank U.A.
+ * Copyright 2020 Coöperatieve Rabobank U.A.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ module.exports = function (config) {
     tsconfigFile: 'tsconfig.json',
     mutate: ['src/**/*.ts'],
     mochaOptions: {
-      files: [
+      spec: [
         'test/**/*.test.ts']
     },
     thresholds: {
