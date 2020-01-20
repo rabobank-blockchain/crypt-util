@@ -18,6 +18,7 @@ import * as chai from 'chai'
 import * as chaiAsPromised from 'chai-as-promised'
 import * as sinon from 'sinon'
 import { LocalCryptUtils } from '../src'
+import { ethers } from 'ethers'
 
 const assert = chai.assert
 
@@ -33,8 +34,9 @@ describe('cryptutils integration with libs', () => {
   const derivedAccount = 314
   const derivedKeyId = 152679
   const privExtKey = 'xprv9s21ZrQH143K4Hahxy3chUqrrHbCynU5CcnRg9xijCvCG4f3AJb1PgiaXpjik6pDnT1qRmf3V3rzn26UNMWDjfEpUKL4ouy6t5ZVa4GAJVG'
-  const signature = 'db678bdad87f4ffe3242a494818efe6839df0faa3ba6dea38adbd3dfc2354db816266ef9132ab6a76b5205507464ee13c879a2319c38218ffe1052dcc327da84'
-  const pubKey = '332765d4c906503aa93420c294448517cf82c1ea0e206dc5bd90894b7fdcd17e647b9f1bd3f29cbfa621f814e41f7377bffe9cbb76f6d9cdb92918280de59a32'
+  const signature = '0x7129ab6ac278c4d1ab120292ada929b1638eb654a11e6929c2490898bc2b4e6f15a9626d51f1aa2717356fc0d39ae8b9f83beeee061655e16de4f76d683da44d1b'
+  const publicKey = '0x04dc07a3c64c076aab718c0392c7598a03eb669b7bd94a88a178846833c5b1d5724b9bf9082f1efbda048e0ca1bdfa075f7c10a35d89d4cf5a032fa7627a0a6f34'
+  const address = '0x6Cb8b9B321cfefECB9a0e5B3EB0536962289711a'
   const payload = 'This is a test'
   let sut = new LocalCryptUtils()
 
@@ -86,10 +88,9 @@ describe('cryptutils integration with libs', () => {
   it('should not positively verify a wrong signature', () => {
     // Arrange
     sut.createMasterPrivateKey()
-    const pubKey = sut.derivePublicKey(account, keyId)
     // Act
     const signature = sut.signPayload(account, keyId, payload + 'wrong')
-    const verified = sut.verifyPayload(payload, pubKey, signature)
+    const verified = sut.verifyPayload(payload, address, signature)
     // Assert
     assert.isNotTrue(verified)
   })
@@ -110,7 +111,7 @@ describe('cryptutils integration with libs', () => {
     // Act
     const privKey = sut.derivePrivateKey(derivedAccount, derivedKeyId)
     // Assert
-    assert.strictEqual(privKey, 'd9be5393869f3921ac0ede88e8c836f4d7c8a29def749c0fec35097d4355fc1b')
+    assert.strictEqual(privKey, '0xd9be5393869f3921ac0ede88e8c836f4d7c8a29def749c0fec35097d4355fc1b')
   })
 
   it('should derive the correct public key', () => {
@@ -119,7 +120,7 @@ describe('cryptutils integration with libs', () => {
     // Act
     const pubKey = sut.derivePublicKey(derivedAccount, derivedKeyId)
     // Assert
-    assert.strictEqual(pubKey, 'dc07a3c64c076aab718c0392c7598a03eb669b7bd94a88a178846833c5b1d5724b9bf9082f1efbda048e0ca1bdfa075f7c10a35d89d4cf5a032fa7627a0a6f34')
+    assert.strictEqual(pubKey, '0x04dc07a3c64c076aab718c0392c7598a03eb669b7bd94a88a178846833c5b1d5724b9bf9082f1efbda048e0ca1bdfa075f7c10a35d89d4cf5a032fa7627a0a6f34')
   })
 
   it('should derive the correct public extended key', () => {
@@ -140,13 +141,13 @@ describe('cryptutils integration with libs', () => {
     assert.strictEqual(pubKey, 'xpub6HGpFaxEhavCKxZCKu5M3qQs47E8WzT5xtRN6ALTBckgfQsJHM6ASC6nSPXRwbTU9kL8iJ6pztwTqWf6RFXmRqG1G5L57HkVQ4eC1WVUwR1')
   })
 
-  it('should derive the correct private extended key', () => {
+  it('should derive the correct private key from path', () => {
     // Arrange
     sut.importMasterPrivateKey(privExtKey)
     // Act
     const privKey = sut.derivePrivateKeyFromPath(`m/44'/60'/${derivedAccount}'/0'/${derivedKeyId}'`)
     // Assert
-    assert.strictEqual(privKey, 'd9be5393869f3921ac0ede88e8c836f4d7c8a29def749c0fec35097d4355fc1b')
+    assert.strictEqual(privKey, '0xd9be5393869f3921ac0ede88e8c836f4d7c8a29def749c0fec35097d4355fc1b')
   })
 
   it('should create correct signature for certain payload', () => {
@@ -155,19 +156,16 @@ describe('cryptutils integration with libs', () => {
     // Act
     const signature = sut.signPayload(derivedAccount, derivedKeyId, payload)
     // Assert
-    assert.strictEqual(signature, '7129ab6ac278c4d1ab120292ada929b1638eb654a11e6929c2490898bc2b4e6f15a9626d51f1aa2717356fc0d39ae8b9f83beeee061655e16de4f76d683da44d')
+    assert.strictEqual(signature, '0x7129ab6ac278c4d1ab120292ada929b1638eb654a11e6929c2490898bc2b4e6f15a9626d51f1aa2717356fc0d39ae8b9f83beeee061655e16de4f76d683da44d1b')
   })
 
   it('should verify signature correct for certain payload', () => {
-    // Act
-    const verified = sut.verifyPayload(payload, pubKey, signature)
-    // Assert
-    assert.isTrue(verified)
-  })
+    // Arrange
+    sut.importMasterPrivateKey(privExtKey)
+    const signature = sut.signPayload(derivedAccount, derivedKeyId, payload)
 
-  it('should verify signature correct with a public key prefixed with "0x"', () => {
     // Act
-    const verified = sut.verifyPayload(payload, '0x' + pubKey, signature)
+    const verified = sut.verifyPayload(payload, address, signature)
     // Assert
     assert.isTrue(verified)
   })
@@ -184,9 +182,9 @@ describe('cryptutils integration with libs', () => {
 
   it('should not verify signature correct for certain incorrect signature combi', () => {
     // Arrange
-    const wrongSignature = 'abcdefabcdefabcdefa532ae3cf7fb08d2b1dae2726d24a321efe0110427e23069729bd9ca94c4896fde38260a9b457c00743fe9e7e45283b367307abcdefabc'
+    const wrongSignature = '0xddd0a7290af9526056b4e35a077b9a11b513aa0028ec6c9880948544508f3c63265e99e47ad31bb2cab9646c504576b3abc6939a1710afc08cbf3034d73214b81c'
     // Act
-    const verified = sut.verifyPayload(payload, pubKey, wrongSignature)
+    const verified = sut.verifyPayload(payload, address, wrongSignature)
     // Assert
     assert.isNotTrue(verified)
   })
@@ -195,7 +193,7 @@ describe('cryptutils integration with libs', () => {
     // Arrange
     const incorrectPayload = 'This is a wrong payload'
     // Act
-    const verified = sut.verifyPayload(incorrectPayload, pubKey, signature)
+    const verified = sut.verifyPayload(incorrectPayload, address, signature)
     // Assert
     assert.isNotTrue(verified)
   })

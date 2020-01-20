@@ -15,11 +15,8 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-// @ts-ignore
-const HDKey = require("hdkey");
-const brorand = require("brorand");
-const secp256k1 = require("secp256k1");
-const js_sha3_1 = require("js-sha3");
+const ethers_1 = require("ethers");
+const HDNode = ethers_1.ethers.utils.HDNode;
 class LocalCryptUtils {
     /**
      * Shows what kind of cryptographic algorithm is
@@ -33,8 +30,8 @@ class LocalCryptUtils {
      * Creates the master private key, which can be exported for local storage
      */
     createMasterPrivateKey() {
-        this._hdkey = HDKey.fromMasterSeed(brorand(32));
-        if (!this._hdkey) {
+        this._hdnode = HDNode.fromSeed(ethers_1.ethers.utils.randomBytes(32));
+        if (!this._hdnode) {
             throw new Error('Could not create master private key');
         }
     }
@@ -43,14 +40,19 @@ class LocalCryptUtils {
      * @return string the private key
      */
     exportMasterPrivateKey() {
-        return this._hdkey.privateExtendedKey;
+        if (this._hdnode) {
+            return this._hdnode.extendedKey;
+        }
+        else {
+            throw (new Error('No MasterPrivateKey instantiated'));
+        }
     }
     /**
      * Imports a master private extended key
      * @param privExtKey the key to be imported
      */
     importMasterPrivateKey(privExtKey) {
-        this._hdkey = HDKey.fromExtendedKey(privExtKey);
+        this._hdnode = HDNode.fromExtendedKey(privExtKey);
     }
     /**
      * Derives the corresponding private key for this specific account(id) and key(id)
@@ -59,7 +61,12 @@ class LocalCryptUtils {
      * @return string the new derived private key
      */
     derivePrivateKey(account, keyId) {
-        return this._hdkey.derive(this.getPath(account, keyId)).privateKey.toString('hex');
+        if (this._hdnode) {
+            return this._hdnode.derivePath(this.getPath(account, keyId)).privateKey;
+        }
+        else {
+            throw (new Error('No MasterPrivateKey instantiated'));
+        }
     }
     /**
      * Derives the corresponding public key for his specific account(id) and key(id)
@@ -68,10 +75,13 @@ class LocalCryptUtils {
      * @return string the new derived public key (prefixed with 0x)
      */
     derivePublicKey(account, keyId) {
-        // hdkey only returns public key in compressed format. secp256k1 allows for uncompressed format, which we need.
-        // The first byte must be stripped off
-        const pubKey = secp256k1.publicKeyCreate(this._hdkey.derive(this.getPath(account, keyId)).privateKey, false).slice(-64);
-        return pubKey.toString('hex');
+        if (this._hdnode) {
+            const compressedPublicKey = this._hdnode.derivePath(this.getPath(account, keyId)).publicKey;
+            return ethers_1.ethers.utils.computePublicKey(compressedPublicKey, false);
+        }
+        else {
+            throw (new Error('No MasterPrivateKey instantiated'));
+        }
     }
     /**
      * Derives the corresponding address for this specific account(id) and key(id)
@@ -80,10 +90,12 @@ class LocalCryptUtils {
      * @return string the new derived address key, prefixed with 0x
      */
     deriveAddress(account, keyId) {
-        // hdkey only returns public key in compressed format. secp256k1 allows for uncompressed format, which we need.
-        // The first byte must be stripped off
-        const pubKey = secp256k1.publicKeyCreate(this._hdkey.derive(this.getPath(account, keyId)).privateKey, false).slice(-64);
-        return this.toChecksumAddress(js_sha3_1.keccak256(pubKey).slice(-40));
+        if (this._hdnode) {
+            return this._hdnode.derivePath(this.getPath(account, keyId)).address;
+        }
+        else {
+            throw (new Error('No MasterPrivateKey instantiated'));
+        }
     }
     /**
      * Derives the corresponding public extended key for his specific account(id) and key(id) using accountid and keyid
@@ -92,7 +104,12 @@ class LocalCryptUtils {
      * @return string the new derived public extended key
      */
     derivePublicExtendedKey(account, keyId) {
-        return this._hdkey.derive(this.getPath(account, keyId)).publicExtendedKey;
+        if (this._hdnode) {
+            return this._hdnode.derivePath(this.getPath(account, keyId)).neuter().extendedKey;
+        }
+        else {
+            throw (new Error('No MasterPrivateKey instantiated'));
+        }
     }
     /**
      * Derives the corresponding public extended key for his specific path
@@ -100,7 +117,12 @@ class LocalCryptUtils {
      * @return string the new derived public extended key
      */
     derivePublicExtendedKeyFromPath(path) {
-        return this._hdkey.derive(path).publicExtendedKey;
+        if (this._hdnode) {
+            return this._hdnode.derivePath(path).neuter().extendedKey;
+        }
+        else {
+            throw (new Error('No MasterPrivateKey instantiated'));
+        }
     }
     /**
      * Derives the corresponding private extended key for his specific path
@@ -108,7 +130,12 @@ class LocalCryptUtils {
      * @return string the new derived private extended key
      */
     derivePrivateKeyFromPath(path) {
-        return this._hdkey.derive(path).privateKey.toString('hex');
+        if (this._hdnode) {
+            return this._hdnode.derivePath(path).privateKey;
+        }
+        else {
+            throw (new Error('No MasterPrivateKey instantiated'));
+        }
     }
     /**
      * Signs a certain payload with the corresponding key for this specific account(id) and key(id)
@@ -117,23 +144,29 @@ class LocalCryptUtils {
      * @param payload the payload which will be signed
      * @return string the signature
      */
-    signPayload(account, keyId, payload) {
-        const childHdkey = this._hdkey.derive(this.getPath(account, keyId));
-        const hashBuf = Buffer.from(js_sha3_1.keccak256.digest(payload));
-        return childHdkey.sign(hashBuf).toString('hex');
+    signPayload(account, keyId, message) {
+        if (this._hdnode) {
+            const childPrivateKey = this._hdnode.derivePath(this.getPath(account, keyId)).privateKey;
+            const messageBytes = ethers_1.ethers.utils.toUtf8Bytes(message);
+            const messageDigest = ethers_1.ethers.utils.keccak256(messageBytes);
+            const signingKey = new ethers_1.ethers.utils.SigningKey(childPrivateKey);
+            return ethers_1.ethers.utils.joinSignature(signingKey.signDigest(ethers_1.ethers.utils.hashMessage(messageDigest)));
+        }
+        else {
+            throw (new Error('No MasterPrivateKey instantiated'));
+        }
     }
     /**
      * Verifies that the signature over a payload is set by the owner of the publicKey
      * @param payload the payload which will be signed
-     * @param publicKey the public key from the signer
+     * @param address the address from the signer
      * @param signature the signature from the signer
      * @return boolean whether the payload is valid or not
      */
-    verifyPayload(payload, publicKey, signature) {
-        const hash = Buffer.from(js_sha3_1.keccak256.digest(payload));
-        const signatureBuf = Buffer.from(signature, 'hex');
-        const buf = Buffer.from(('04' + publicKey.replace(/^0x/, '')), 'hex');
-        return secp256k1.verify(hash, signatureBuf, buf);
+    verifyPayload(message, address, signature) {
+        const messageBytes = ethers_1.ethers.utils.toUtf8Bytes(message);
+        const messageDigest = ethers_1.ethers.utils.keccak256(messageBytes);
+        return ethers_1.ethers.utils.verifyMessage(messageDigest, signature) === address;
     }
     /**
      * Determine the correct getPath for Ethereum like key
@@ -144,24 +177,6 @@ class LocalCryptUtils {
      */
     getPath(account, keyId) {
         return `m/44'/60'/${account}'/0'/${keyId}'`;
-    }
-    /**
-     * Determine the checksum address variant
-     * @param address the address to be converted to a checksumaddress
-     * @return a checksummed address
-     */
-    toChecksumAddress(address) {
-        const hash = js_sha3_1.keccak256(address);
-        let ret = '0x';
-        for (let i = 0; i < address.length; i++) {
-            if (parseInt(hash[i], 16) >= 8) {
-                ret += address[i].toUpperCase();
-            }
-            else {
-                ret += address[i];
-            }
-        }
-        return ret;
     }
 }
 exports.LocalCryptUtils = LocalCryptUtils;
