@@ -1,6 +1,6 @@
 # 0.1.4 / 20-01-2020
 
-**Enhancements:**
+**Bugfixes:**
 - Downgraded Dist files to TypeScript 3.4.5 due to a [breaking change in 3.7](https://github.com/microsoft/TypeScript/issues/33939)
 
 # 0.1.3 / 08-01-2020
