@@ -43,6 +43,12 @@ export declare class LocalCryptUtils implements CryptUtil {
      */
     deriveAddress(account: number, keyId: number): string;
     /**
+     * Computes an address out of an uncompressed public key
+     * @param publicKey the full, uncompressed public key
+     * @return string the new derived address key, prefixed with 0x
+     */
+    getAddressFromPubKey(publicKey: string): string;
+    /**
      * Derives the corresponding public extended key for his specific account(id) and key(id) using accountid and keyid
      * @param account the account ID
      * @param keyId the key ID

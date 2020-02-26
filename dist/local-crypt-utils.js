@@ -86,6 +86,14 @@ class LocalCryptUtils {
         return this.toChecksumAddress(js_sha3_1.keccak256(pubKey).slice(-40));
     }
     /**
+     * Computes an address out of an uncompressed public key
+     * @param publicKey the full, uncompressed public key
+     * @return string the new derived address key, prefixed with 0x
+     */
+    getAddressFromPubKey(publicKey) {
+        return this.toChecksumAddress(js_sha3_1.keccak256(Buffer.from(publicKey, 'hex')).slice(-40));
+    }
+    /**
      * Derives the corresponding public extended key for his specific account(id) and key(id) using accountid and keyid
      * @param account the account ID
      * @param keyId the key ID
