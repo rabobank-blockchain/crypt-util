@@ -87,6 +87,13 @@ export interface CryptUtil {
   deriveAddress (account: number, keyId: number): string
 
   /**
+   * Computes an address out of an uncompressed public key
+   * @param publicKey the full, uncompressed public key
+   * @return string the new derived address key, prefixed with 0x
+   */
+  getAddressFromPubKey (publicKey: string): string
+
+  /**
    * Signs a certain payload with the corresponding key for this specific account(id) and key(id)
    * @param account the account ID
    * @param keyId the key ID
