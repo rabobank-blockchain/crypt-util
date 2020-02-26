@@ -1,3 +1,8 @@
+# 0.1.5 / 26-02-2020
+
+**New features:**
+- Compute an address out of a public key with `getAddressFromPubKey(pubkey)`
+
 # 0.1.4 / 20-01-2020
 
 **Bugfixes:**
