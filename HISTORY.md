@@ -3,6 +3,9 @@
 **New features:**
 - Compute an address out of a public key with `getAddressFromPubKey(pubkey)`
 
+**Bugfixes:**
+- Updated package.json to use TypeScript `~3.4.5` instead of `^3.4.5`
+
 # 0.1.4 / 20-01-2020
 
 **Bugfixes:**
