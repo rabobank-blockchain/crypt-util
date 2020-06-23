@@ -21,7 +21,7 @@ import { ethers } from 'ethers'
 const HDNode = ethers.utils.HDNode
 
 export class LocalCryptUtils implements CryptUtil {
-  private _hdnode: ethers.utils.HDNode.HDNode | undefined
+  private _hdnode: ethers.utils.HDNode | undefined
 
   /**
    * Shows what kind of cryptographic algorithm is

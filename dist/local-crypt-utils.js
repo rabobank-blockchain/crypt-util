@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.LocalCryptUtils = void 0;
 const ethers_1 = require("ethers");
 const HDNode = ethers_1.ethers.utils.HDNode;
 class LocalCryptUtils {
@@ -150,7 +151,7 @@ class LocalCryptUtils {
             const messageBytes = ethers_1.ethers.utils.toUtf8Bytes(message);
             const messageDigest = ethers_1.ethers.utils.keccak256(messageBytes);
             const signingKey = new ethers_1.ethers.utils.SigningKey(childPrivateKey);
-            return ethers_1.ethers.utils.joinSignature(signingKey.signDigest(ethers_1.ethers.utils.hashMessage(messageDigest)));
+            return ethers_1.ethers.utils.joinSignature(signingKey.signDigest(messageDigest));
         }
         else {
             throw (new Error('No MasterPrivateKey instantiated'));
@@ -163,10 +164,16 @@ class LocalCryptUtils {
      * @param signature the signature from the signer
      * @return boolean whether the payload is valid or not
      */
-    verifyPayload(message, address, signature) {
+    verifyPayload(message, addressOrPublicKey, signature) {
         const messageBytes = ethers_1.ethers.utils.toUtf8Bytes(message);
         const messageDigest = ethers_1.ethers.utils.keccak256(messageBytes);
-        return ethers_1.ethers.utils.verifyMessage(messageDigest, signature) === address;
+        try {
+            const address = (addressOrPublicKey.length > 42) ? ethers_1.ethers.utils.computeAddress(addressOrPublicKey) : addressOrPublicKey;
+            return ethers_1.ethers.utils.recoverAddress(messageDigest, signature) === address;
+        }
+        catch (_a) {
+            return false;
+        }
     }
     /**
      * Determine the correct getPath for Ethereum like key

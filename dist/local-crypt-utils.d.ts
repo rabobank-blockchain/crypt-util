@@ -6,7 +6,7 @@ export declare class LocalCryptUtils implements CryptUtil {
      * using this instance.
      * @return string
      */
-    readonly algorithmName: string;
+    get algorithmName(): string;
     /**
      * Creates the master private key, which can be exported for local storage
      */
@@ -76,7 +76,7 @@ export declare class LocalCryptUtils implements CryptUtil {
      * @param signature the signature from the signer
      * @return boolean whether the payload is valid or not
      */
-    verifyPayload(message: string, address: string, signature: string): boolean;
+    verifyPayload(message: string, addressOrPublicKey: string, signature: string): boolean;
     /**
      * Determine the correct getPath for Ethereum like key
      * for this specific account(id) and key(id)
