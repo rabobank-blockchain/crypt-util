@@ -212,6 +212,15 @@ describe('cryptutils class', () => {
     assert.equal(pubExtendedKey.length, 111)
   })
 
+  it('should calculate the address out of a public key', () => {
+    // Arrange
+    const pubkey = '0x045c1d9376dd92af86696de24806477a40c21291831840a220da1eac511c758c28553456e13ea0057641aa2dc4e66cfffbd49ae3a316f933f6613f87bf7e8fdf77'
+    const matchingAddress = '0xdA2B12cED8B2fc19c5abEF68aC99F55616BC98eB'
+
+    // Act & Assert
+    assert.equal(sut.getAddressFromPubKey(pubkey), matchingAddress)
+  })
+
   it('should generate a derived address starting with 0x and a length of 42 characters', () => {
     // Arrange
     const account = 0

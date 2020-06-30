@@ -1,12 +1,20 @@
-# 0.1.5 / 23-06-2020
+# 0.1.6 / 23-06-2020
 
 **Enhancements:**
 - Updated `ethers` and `typescript`, fixed [SNYK-JS-ELLIPTIC-571484](https://snyk.io/vuln/SNYK-JS-ELLIPTIC-571484)
 - Node versions 12, 13 and 14 supported
 
+# 0.1.5 / 26-02-2020
+
+**New features:**
+- Compute an address out of a public key with `getAddressFromPubKey(pubkey)`
+
+**Bugfixes:**
+- Updated package.json to use TypeScript `~3.4.5` instead of `^3.4.5`
+
 # 0.1.4 / 20-01-2020
 
-**Enhancements:**
+**Bugfixes:**
 - Downgraded Dist files to TypeScript 3.4.5 due to a [breaking change in 3.7](https://github.com/microsoft/TypeScript/issues/33939)
 
 # 0.1.3 / 08-01-2020

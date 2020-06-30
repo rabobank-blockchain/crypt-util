@@ -106,6 +106,15 @@ export class LocalCryptUtils implements CryptUtil {
   }
 
   /**
+   * Computes an address out of an uncompressed public key
+   * @param publicKey the full, uncompressed public key
+   * @return string the new derived address key, prefixed with 0x
+   */
+  public getAddressFromPubKey (publicKey: string): string {
+    return ethers.utils.computeAddress(publicKey)
+  }
+
+  /**
    * Derives the corresponding public extended key for his specific account(id) and key(id) using accountid and keyid
    * @param account the account ID
    * @param keyId the key ID
