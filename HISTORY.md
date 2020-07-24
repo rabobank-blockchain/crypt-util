@@ -1,8 +1,9 @@
-# 0.1.6 / 23-06-2020
+# 0.1.6 / 24-07-2020
 
 **Enhancements:**
 - Updated `ethers` and `typescript`, fixed [SNYK-JS-ELLIPTIC-571484](https://snyk.io/vuln/SNYK-JS-ELLIPTIC-571484)
 - Node versions 12, 13 and 14 supported
+- Security Patches for dependent packages
 
 # 0.1.5 / 26-02-2020
 
