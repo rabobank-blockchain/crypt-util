@@ -1,6 +1,6 @@
 {
   "name": "crypt-util",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Lib providing cryptographic functions",
   "engines": {
     "node": ">=8.15.0",
