@@ -166,12 +166,15 @@ export class LocalCryptUtils implements CryptUtil {
   public verifyPayload (message: string, addressOrPublicKey: string, signature: string): boolean {
     const messageBytes = ethers.utils.toUtf8Bytes(message)
     const messageDigest = ethers.utils.keccak256(messageBytes)
+    let res = false
     try {
       const address: string = (addressOrPublicKey.length > 42) ? ethers.utils.computeAddress(addressOrPublicKey) : addressOrPublicKey
-      return ethers.utils.recoverAddress(messageDigest, signature) === address
+      res = ethers.utils.recoverAddress(messageDigest, signature) === address
     } catch {
-      return false
+      // Leave result false when error
     }
+
+    return res
   }
 
   /**

@@ -74,13 +74,24 @@ describe('cryptutils integration with libs', () => {
     assert.notEqual(privExtKey1, privExtKey2)
   })
 
-  it('should successfully verify a valid signature', () => {
+  it('should successfully verify a valid signature with public key', () => {
     // Arrange
     sut.createMasterPrivateKey()
     const pubKey = sut.derivePublicKey(account, keyId)
     // Act
     const signature = sut.signPayload(account, keyId, payload)
     const verified = sut.verifyPayload(payload, pubKey, signature)
+    // Assert
+    assert.isTrue(verified)
+  })
+
+  it('should successfully verify a valid signature with address', () => {
+    // Arrange
+    sut.createMasterPrivateKey()
+    const address = sut.deriveAddress(account, keyId)
+    // Act
+    const signature = sut.signPayload(account, keyId, payload)
+    const verified = sut.verifyPayload(payload, address, signature)
     // Assert
     assert.isTrue(verified)
   })
