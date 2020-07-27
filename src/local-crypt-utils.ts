@@ -77,7 +77,7 @@ export class LocalCryptUtils implements CryptUtil {
    * @return string the new derived private key
    */
   public derivePrivateKey (account: number, keyId: number): string {
-    return this.deriveHdNodeItem(this.getPath(account, keyId), HdNodeItem.PrivateKey)
+    return this.deriveHdNodeItemWithAccountAndKeyId(account, keyId, HdNodeItem.PrivateKey)
   }
 
   /**
@@ -87,7 +87,7 @@ export class LocalCryptUtils implements CryptUtil {
    * @return string the new derived public key (prefixed with 0x)
    */
   public derivePublicKey (account: number, keyId: number): string {
-    return this.deriveHdNodeItem(this.getPath(account, keyId), HdNodeItem.PublicKey)
+    return this.deriveHdNodeItemWithAccountAndKeyId(account, keyId, HdNodeItem.PublicKey)
   }
 
   /**
@@ -97,7 +97,7 @@ export class LocalCryptUtils implements CryptUtil {
    * @return string the new derived address key, prefixed with 0x
    */
   public deriveAddress (account: number, keyId: number): string {
-    return this.deriveHdNodeItem(this.getPath(account, keyId), HdNodeItem.Address)
+    return this.deriveHdNodeItemWithAccountAndKeyId(account, keyId, HdNodeItem.Address)
   }
 
   /**
@@ -116,7 +116,7 @@ export class LocalCryptUtils implements CryptUtil {
    * @return string the new derived public extended key
    */
   public derivePublicExtendedKey (account: number, keyId: number): string {
-    return this.deriveHdNodeItem(this.getPath(account, keyId), HdNodeItem.PublicExtendedKey)
+    return this.deriveHdNodeItemWithAccountAndKeyId(account, keyId, HdNodeItem.PublicExtendedKey)
   }
 
   /**
@@ -125,7 +125,7 @@ export class LocalCryptUtils implements CryptUtil {
    * @return string the new derived public extended key
    */
   public derivePublicExtendedKeyFromPath (path: string): string {
-    return this.deriveHdNodeItem(path, HdNodeItem.PublicExtendedKey)
+    return this.deriveHdNodeItemWithPath(path, HdNodeItem.PublicExtendedKey)
   }
 
   /**
@@ -134,7 +134,7 @@ export class LocalCryptUtils implements CryptUtil {
    * @return string the new derived private extended key
    */
   public derivePrivateKeyFromPath (path: string): string {
-    return this.deriveHdNodeItem(path, HdNodeItem.PrivateKey)
+    return this.deriveHdNodeItemWithPath(path, HdNodeItem.PrivateKey)
   }
 
   /**
@@ -185,7 +185,11 @@ export class LocalCryptUtils implements CryptUtil {
     return `m/44'/60'/${account}'/0'/${keyId}'`
   }
 
-  private deriveHdNodeItem (path: string, item: HdNodeItem): string {
+  private deriveHdNodeItemWithAccountAndKeyId (account: number, keyId: number, item: HdNodeItem): string {
+    return this.deriveHdNodeItemWithPath(this.getPath(account, keyId), item)
+  }
+
+  private deriveHdNodeItemWithPath (path: string, item: HdNodeItem): string {
     let ret = ''
     if (this._hdnode) {
       const derivedNode = this._hdnode.derivePath(path)
