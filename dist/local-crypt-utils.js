@@ -18,6 +18,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.LocalCryptUtils = void 0;
 const ethers_1 = require("ethers");
 const HDNode = ethers_1.ethers.utils.HDNode;
+var HdNodeItem;
+(function (HdNodeItem) {
+    HdNodeItem[HdNodeItem["PrivateKey"] = 0] = "PrivateKey";
+    HdNodeItem[HdNodeItem["PrivateExtendedKey"] = 1] = "PrivateExtendedKey";
+    HdNodeItem[HdNodeItem["PublicKey"] = 2] = "PublicKey";
+    HdNodeItem[HdNodeItem["PublicExtendedKey"] = 3] = "PublicExtendedKey";
+    HdNodeItem[HdNodeItem["Address"] = 4] = "Address";
+})(HdNodeItem || (HdNodeItem = {}));
 class LocalCryptUtils {
     /**
      * Shows what kind of cryptographic algorithm is
@@ -62,12 +70,7 @@ class LocalCryptUtils {
      * @return string the new derived private key
      */
     derivePrivateKey(account, keyId) {
-        if (this._hdnode) {
-            return this._hdnode.derivePath(this.getPath(account, keyId)).privateKey;
-        }
-        else {
-            throw (new Error('No MasterPrivateKey instantiated'));
-        }
+        return this.deriveHdNodeItemWithAccountAndKeyId(account, keyId, HdNodeItem.PrivateKey);
     }
     /**
      * Derives the corresponding public key for his specific account(id) and key(id)
@@ -76,13 +79,7 @@ class LocalCryptUtils {
      * @return string the new derived public key (prefixed with 0x)
      */
     derivePublicKey(account, keyId) {
-        if (this._hdnode) {
-            const compressedPublicKey = this._hdnode.derivePath(this.getPath(account, keyId)).publicKey;
-            return ethers_1.ethers.utils.computePublicKey(compressedPublicKey, false);
-        }
-        else {
-            throw (new Error('No MasterPrivateKey instantiated'));
-        }
+        return this.deriveHdNodeItemWithAccountAndKeyId(account, keyId, HdNodeItem.PublicKey);
     }
     /**
      * Derives the corresponding address for this specific account(id) and key(id)
@@ -91,12 +88,7 @@ class LocalCryptUtils {
      * @return string the new derived address key, prefixed with 0x
      */
     deriveAddress(account, keyId) {
-        if (this._hdnode) {
-            return this._hdnode.derivePath(this.getPath(account, keyId)).address;
-        }
-        else {
-            throw (new Error('No MasterPrivateKey instantiated'));
-        }
+        return this.deriveHdNodeItemWithAccountAndKeyId(account, keyId, HdNodeItem.Address);
     }
     /**
      * Computes an address out of an uncompressed public key
@@ -113,12 +105,7 @@ class LocalCryptUtils {
      * @return string the new derived public extended key
      */
     derivePublicExtendedKey(account, keyId) {
-        if (this._hdnode) {
-            return this._hdnode.derivePath(this.getPath(account, keyId)).neuter().extendedKey;
-        }
-        else {
-            throw (new Error('No MasterPrivateKey instantiated'));
-        }
+        return this.deriveHdNodeItemWithAccountAndKeyId(account, keyId, HdNodeItem.PublicExtendedKey);
     }
     /**
      * Derives the corresponding public extended key for his specific path
@@ -126,12 +113,7 @@ class LocalCryptUtils {
      * @return string the new derived public extended key
      */
     derivePublicExtendedKeyFromPath(path) {
-        if (this._hdnode) {
-            return this._hdnode.derivePath(path).neuter().extendedKey;
-        }
-        else {
-            throw (new Error('No MasterPrivateKey instantiated'));
-        }
+        return this.deriveHdNodeItemWithPath(path, HdNodeItem.PublicExtendedKey);
     }
     /**
      * Derives the corresponding private extended key for his specific path
@@ -139,12 +121,7 @@ class LocalCryptUtils {
      * @return string the new derived private extended key
      */
     derivePrivateKeyFromPath(path) {
-        if (this._hdnode) {
-            return this._hdnode.derivePath(path).privateKey;
-        }
-        else {
-            throw (new Error('No MasterPrivateKey instantiated'));
-        }
+        return this.deriveHdNodeItemWithPath(path, HdNodeItem.PrivateKey);
     }
     /**
      * Signs a certain payload with the corresponding key for this specific account(id) and key(id)
@@ -154,16 +131,11 @@ class LocalCryptUtils {
      * @return string the signature
      */
     signPayload(account, keyId, message) {
-        if (this._hdnode) {
-            const childPrivateKey = this._hdnode.derivePath(this.getPath(account, keyId)).privateKey;
-            const messageBytes = ethers_1.ethers.utils.toUtf8Bytes(message);
-            const messageDigest = ethers_1.ethers.utils.keccak256(messageBytes);
-            const signingKey = new ethers_1.ethers.utils.SigningKey(childPrivateKey);
-            return ethers_1.ethers.utils.joinSignature(signingKey.signDigest(messageDigest));
-        }
-        else {
-            throw (new Error('No MasterPrivateKey instantiated'));
-        }
+        const childPrivateKey = this.deriveHdNodeItemWithAccountAndKeyId(account, keyId, HdNodeItem.PrivateKey);
+        const messageBytes = ethers_1.ethers.utils.toUtf8Bytes(message);
+        const messageDigest = ethers_1.ethers.utils.keccak256(messageBytes);
+        const signingKey = new ethers_1.ethers.utils.SigningKey(childPrivateKey);
+        return ethers_1.ethers.utils.joinSignature(signingKey.signDigest(messageDigest));
     }
     /**
      * Verifies that the signature over a payload is set by the owner of the publicKey
@@ -175,13 +147,15 @@ class LocalCryptUtils {
     verifyPayload(message, addressOrPublicKey, signature) {
         const messageBytes = ethers_1.ethers.utils.toUtf8Bytes(message);
         const messageDigest = ethers_1.ethers.utils.keccak256(messageBytes);
+        let res = false;
         try {
             const address = (addressOrPublicKey.length > 42) ? ethers_1.ethers.utils.computeAddress(addressOrPublicKey) : addressOrPublicKey;
-            return ethers_1.ethers.utils.recoverAddress(messageDigest, signature) === address;
+            res = ethers_1.ethers.utils.recoverAddress(messageDigest, signature) === address;
         }
         catch (_a) {
-            return false;
+            // Leave result false when error
         }
+        return res;
     }
     /**
      * Determine the correct getPath for Ethereum like key
@@ -192,6 +166,33 @@ class LocalCryptUtils {
      */
     getPath(account, keyId) {
         return `m/44'/60'/${account}'/0'/${keyId}'`;
+    }
+    deriveHdNodeItemWithAccountAndKeyId(account, keyId, item) {
+        return this.deriveHdNodeItemWithPath(this.getPath(account, keyId), item);
+    }
+    deriveHdNodeItemWithPath(path, item) {
+        let ret = '';
+        if (this._hdnode) {
+            const derivedNode = this._hdnode.derivePath(path);
+            switch (item) {
+                case HdNodeItem.PrivateKey:
+                    ret = derivedNode.privateKey;
+                    break;
+                case HdNodeItem.PublicKey:
+                    const compressedPublicKey = derivedNode.publicKey;
+                    ret = ethers_1.ethers.utils.computePublicKey(compressedPublicKey, false);
+                    break;
+                case HdNodeItem.PublicExtendedKey:
+                    ret = derivedNode.neuter().extendedKey;
+                    break;
+                case HdNodeItem.Address:
+                    ret = derivedNode.address;
+            }
+        }
+        else {
+            throw (new Error('No MasterPrivateKey instantiated'));
+        }
+        return ret;
     }
 }
 exports.LocalCryptUtils = LocalCryptUtils;

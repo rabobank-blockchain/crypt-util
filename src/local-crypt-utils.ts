@@ -145,15 +145,11 @@ export class LocalCryptUtils implements CryptUtil {
    * @return string the signature
    */
   public signPayload (account: number, keyId: number, message: string): string {
-    if (this._hdnode) {
-      const childPrivateKey = this._hdnode.derivePath(this.getPath(account, keyId)).privateKey
-      const messageBytes = ethers.utils.toUtf8Bytes(message)
-      const messageDigest = ethers.utils.keccak256(messageBytes)
-      const signingKey = new ethers.utils.SigningKey(childPrivateKey)
-      return ethers.utils.joinSignature(signingKey.signDigest(messageDigest))
-    } else {
-      throw (new Error('No MasterPrivateKey instantiated'))
-    }
+    const childPrivateKey = this.deriveHdNodeItemWithAccountAndKeyId(account, keyId, HdNodeItem.PrivateKey)
+    const messageBytes = ethers.utils.toUtf8Bytes(message)
+    const messageDigest = ethers.utils.keccak256(messageBytes)
+    const signingKey = new ethers.utils.SigningKey(childPrivateKey)
+    return ethers.utils.joinSignature(signingKey.signDigest(messageDigest))
   }
 
   /**

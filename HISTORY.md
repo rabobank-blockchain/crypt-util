@@ -1,7 +1,15 @@
-# 0.1.6 / 24-07-2020
+# 0.2.0 / 27-07-2020
+
+**Breaking:**
+
+- PublicKey must be prefixed with '0x04' (to show it is an uncompressed public key)
+- PrivateKey must be prefixed with '0x'
+- Signature must be prefixed with '0x' and suffixed with v-value 1b/1c
 
 **Enhancements:**
-- Updated `ethers` and `typescript`, fixed [SNYK-JS-ELLIPTIC-571484](https://snyk.io/vuln/SNYK-JS-ELLIPTIC-571484)
+
+- Switch from hdkey, brorand, secp256k1 and js-sha3 to ethers.js lib
+- verifyPayload possible with publicKey or ethereum address
 - Node versions 12, 13 and 14 supported
 - Security Patches for dependent packages
 

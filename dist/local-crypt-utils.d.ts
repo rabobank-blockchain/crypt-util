@@ -91,4 +91,6 @@ export declare class LocalCryptUtils implements CryptUtil {
      * @return string the new path
      */
     private getPath;
+    private deriveHdNodeItemWithAccountAndKeyId;
+    private deriveHdNodeItemWithPath;
 }
