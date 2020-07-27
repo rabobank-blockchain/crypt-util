@@ -1,7 +1,6 @@
 # 0.2.0 / 27-07-2020
 
 **Breaking:**
-
 - PublicKey must be prefixed with '0x04' (to show it is an uncompressed public key)
 - PrivateKey must be prefixed with '0x'
 - Signature must be prefixed with '0x' and suffixed with v-value 1b/1c
