@@ -20,6 +20,14 @@ import { ethers } from 'ethers'
 
 const HDNode = ethers.utils.HDNode
 
+enum HdNodeItem {
+  PrivateKey,
+  PrivateExtendedKey,
+  PublicKey,
+  PublicExtendedKey,
+  Address
+}
+
 export class LocalCryptUtils implements CryptUtil {
   private _hdnode: ethers.utils.HDNode | undefined
 
@@ -69,11 +77,7 @@ export class LocalCryptUtils implements CryptUtil {
    * @return string the new derived private key
    */
   public derivePrivateKey (account: number, keyId: number): string {
-    if (this._hdnode) {
-      return this._hdnode.derivePath(this.getPath(account, keyId)).privateKey
-    } else {
-      throw (new Error('No MasterPrivateKey instantiated'))
-    }
+    return this.deriveHdNodeItem(this.getPath(account, keyId), HdNodeItem.PrivateKey)
   }
 
   /**
@@ -83,12 +87,7 @@ export class LocalCryptUtils implements CryptUtil {
    * @return string the new derived public key (prefixed with 0x)
    */
   public derivePublicKey (account: number, keyId: number): string {
-    if (this._hdnode) {
-      const compressedPublicKey = this._hdnode.derivePath(this.getPath(account, keyId)).publicKey
-      return ethers.utils.computePublicKey(compressedPublicKey, false)
-    } else {
-      throw (new Error('No MasterPrivateKey instantiated'))
-    }
+    return this.deriveHdNodeItem(this.getPath(account, keyId), HdNodeItem.PublicKey)
   }
 
   /**
@@ -98,11 +97,7 @@ export class LocalCryptUtils implements CryptUtil {
    * @return string the new derived address key, prefixed with 0x
    */
   public deriveAddress (account: number, keyId: number): string {
-    if (this._hdnode) {
-      return this._hdnode.derivePath(this.getPath(account, keyId)).address
-    } else {
-      throw (new Error('No MasterPrivateKey instantiated'))
-    }
+    return this.deriveHdNodeItem(this.getPath(account, keyId), HdNodeItem.Address)
   }
 
   /**
@@ -121,11 +116,7 @@ export class LocalCryptUtils implements CryptUtil {
    * @return string the new derived public extended key
    */
   public derivePublicExtendedKey (account: number, keyId: number): string {
-    if (this._hdnode) {
-      return this._hdnode.derivePath(this.getPath(account, keyId)).neuter().extendedKey
-    } else {
-      throw (new Error('No MasterPrivateKey instantiated'))
-    }
+    return this.deriveHdNodeItem(this.getPath(account, keyId), HdNodeItem.PublicExtendedKey)
   }
 
   /**
@@ -134,11 +125,7 @@ export class LocalCryptUtils implements CryptUtil {
    * @return string the new derived public extended key
    */
   public derivePublicExtendedKeyFromPath (path: string): string {
-    if (this._hdnode) {
-      return this._hdnode.derivePath(path).neuter().extendedKey
-    } else {
-      throw (new Error('No MasterPrivateKey instantiated'))
-    }
+    return this.deriveHdNodeItem(path, HdNodeItem.PublicExtendedKey)
   }
 
   /**
@@ -147,11 +134,7 @@ export class LocalCryptUtils implements CryptUtil {
    * @return string the new derived private extended key
    */
   public derivePrivateKeyFromPath (path: string): string {
-    if (this._hdnode) {
-      return this._hdnode.derivePath(path).privateKey
-    } else {
-      throw (new Error('No MasterPrivateKey instantiated'))
-    }
+    return this.deriveHdNodeItem(path, HdNodeItem.PrivateKey)
   }
 
   /**
@@ -201,4 +184,29 @@ export class LocalCryptUtils implements CryptUtil {
   private getPath (account: number, keyId: number): string {
     return `m/44'/60'/${account}'/0'/${keyId}'`
   }
+
+  private deriveHdNodeItem (path: string, item: HdNodeItem): string {
+    let ret = ''
+    if (this._hdnode) {
+      const derivedNode = this._hdnode.derivePath(path)
+      switch (item) {
+        case HdNodeItem.PrivateKey:
+          ret = derivedNode.privateKey
+          break
+        case HdNodeItem.PublicKey:
+          const compressedPublicKey = derivedNode.publicKey
+          ret = ethers.utils.computePublicKey(compressedPublicKey, false)
+          break
+        case HdNodeItem.PublicExtendedKey:
+          ret = derivedNode.neuter().extendedKey
+          break
+        case HdNodeItem.Address:
+          ret = derivedNode.address
+      }
+    } else {
+      throw (new Error('No MasterPrivateKey instantiated'))
+    }
+    return ret
+  }
+
 }
