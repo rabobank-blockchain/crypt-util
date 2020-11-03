@@ -212,9 +212,27 @@ describe('cryptutils class', () => {
     assert.equal(pubExtendedKey.length, 111)
   })
 
-  it('should calculate the address out of a public key', () => {
+  it('should calculate the address out of a public key prefixed with 0x04', () => {
     // Arrange
     const pubkey = '0x045c1d9376dd92af86696de24806477a40c21291831840a220da1eac511c758c28553456e13ea0057641aa2dc4e66cfffbd49ae3a316f933f6613f87bf7e8fdf77'
+    const matchingAddress = '0xdA2B12cED8B2fc19c5abEF68aC99F55616BC98eB'
+
+    // Act & Assert
+    assert.equal(sut.getAddressFromPubKey(pubkey), matchingAddress)
+  })
+
+  it('should calculate the address out of a public key prefixed with 04', () => {
+    // Arrange
+    const pubkey = '045c1d9376dd92af86696de24806477a40c21291831840a220da1eac511c758c28553456e13ea0057641aa2dc4e66cfffbd49ae3a316f933f6613f87bf7e8fdf77'
+    const matchingAddress = '0xdA2B12cED8B2fc19c5abEF68aC99F55616BC98eB'
+
+    // Act & Assert
+    assert.equal(sut.getAddressFromPubKey(pubkey), matchingAddress)
+  })
+
+  it('should calculate the address out of a public key not prefixed at all', () => {
+    // Arrange
+    const pubkey = '5c1d9376dd92af86696de24806477a40c21291831840a220da1eac511c758c28553456e13ea0057641aa2dc4e66cfffbd49ae3a316f933f6613f87bf7e8fdf77'
     const matchingAddress = '0xdA2B12cED8B2fc19c5abEF68aC99F55616BC98eB'
 
     // Act & Assert

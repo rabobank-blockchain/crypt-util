@@ -106,7 +106,16 @@ export class LocalCryptUtils implements CryptUtil {
    * @return string the new derived address key, prefixed with 0x
    */
   public getAddressFromPubKey (publicKey: string): string {
-    return ethers.utils.computeAddress(publicKey)
+    let correctFormatPubKey = publicKey
+    if (publicKey.slice(0,4) !== '0x04') {
+      if (publicKey.slice(0,2) === '04') {
+        // assume only 0x forgotten
+        correctFormatPubKey = '0x' + publicKey
+      } else {
+        correctFormatPubKey = '0x04' + publicKey
+      }
+    }
+    return ethers.utils.computeAddress(correctFormatPubKey)
   }
 
   /**
