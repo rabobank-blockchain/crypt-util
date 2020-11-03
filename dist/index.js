@@ -16,5 +16,5 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 var local_crypt_utils_1 = require("./local-crypt-utils");
-exports.LocalCryptUtils = local_crypt_utils_1.LocalCryptUtils;
+Object.defineProperty(exports, "LocalCryptUtils", { enumerable: true, get: function () { return local_crypt_utils_1.LocalCryptUtils; } });
 //# sourceMappingURL=index.js.map

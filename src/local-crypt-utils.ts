@@ -15,14 +15,21 @@
  */
 
 // @ts-ignore
-import * as HDKey from 'hdkey'
-import * as brorand from 'brorand'
-import * as secp256k1 from 'secp256k1'
-import { keccak256 } from 'js-sha3'
 import { CryptUtil } from './interface/crypt-util'
+import { ethers } from 'ethers'
+
+const HDNode = ethers.utils.HDNode
+
+enum HdNodeItem {
+  PrivateKey,
+  PrivateExtendedKey,
+  PublicKey,
+  PublicExtendedKey,
+  Address
+}
 
 export class LocalCryptUtils implements CryptUtil {
-  private _hdkey: HDKey
+  private _hdnode: ethers.utils.HDNode | undefined
 
   /**
    * Shows what kind of cryptographic algorithm is
@@ -37,8 +44,8 @@ export class LocalCryptUtils implements CryptUtil {
    * Creates the master private key, which can be exported for local storage
    */
   public createMasterPrivateKey (): void {
-    this._hdkey = HDKey.fromMasterSeed(brorand(32))
-    if (!this._hdkey) {
+    this._hdnode = HDNode.fromSeed(ethers.utils.randomBytes(32))
+    if (!this._hdnode) {
       throw new Error('Could not create master private key')
     }
   }
@@ -48,7 +55,11 @@ export class LocalCryptUtils implements CryptUtil {
    * @return string the private key
    */
   public exportMasterPrivateKey (): string {
-    return this._hdkey.privateExtendedKey
+    if (this._hdnode) {
+      return this._hdnode.extendedKey
+    } else {
+      throw(new Error('No MasterPrivateKey instantiated'))
+    }
   }
 
   /**
@@ -56,7 +67,7 @@ export class LocalCryptUtils implements CryptUtil {
    * @param privExtKey the key to be imported
    */
   public importMasterPrivateKey (privExtKey: string): void {
-    this._hdkey = HDKey.fromExtendedKey(privExtKey)
+    this._hdnode = HDNode.fromExtendedKey(privExtKey)
   }
 
   /**
@@ -66,7 +77,7 @@ export class LocalCryptUtils implements CryptUtil {
    * @return string the new derived private key
    */
   public derivePrivateKey (account: number, keyId: number): string {
-    return this._hdkey.derive(this.getPath(account, keyId)).privateKey.toString('hex')
+    return this.deriveHdNodeItemWithAccountAndKeyId(account, keyId, HdNodeItem.PrivateKey)
   }
 
   /**
@@ -76,10 +87,7 @@ export class LocalCryptUtils implements CryptUtil {
    * @return string the new derived public key (prefixed with 0x)
    */
   public derivePublicKey (account: number, keyId: number): string {
-    // hdkey only returns public key in compressed format. secp256k1 allows for uncompressed format, which we need.
-    // The first byte must be stripped off
-    const pubKey = secp256k1.publicKeyCreate(this._hdkey.derive(this.getPath(account, keyId)).privateKey, false).slice(-64)
-    return pubKey.toString('hex')
+    return this.deriveHdNodeItemWithAccountAndKeyId(account, keyId, HdNodeItem.PublicKey)
   }
 
   /**
@@ -89,10 +97,7 @@ export class LocalCryptUtils implements CryptUtil {
    * @return string the new derived address key, prefixed with 0x
    */
   public deriveAddress (account: number, keyId: number): string {
-    // hdkey only returns public key in compressed format. secp256k1 allows for uncompressed format, which we need.
-    // The first byte must be stripped off
-    const pubKey = secp256k1.publicKeyCreate(this._hdkey.derive(this.getPath(account, keyId)).privateKey, false).slice(-64)
-    return this.toChecksumAddress(keccak256(pubKey).slice(-40))
+    return this.deriveHdNodeItemWithAccountAndKeyId(account, keyId, HdNodeItem.Address)
   }
 
   /**
@@ -101,7 +106,16 @@ export class LocalCryptUtils implements CryptUtil {
    * @return string the new derived address key, prefixed with 0x
    */
   public getAddressFromPubKey (publicKey: string): string {
-    return this.toChecksumAddress(keccak256(Buffer.from(publicKey, 'hex')).slice(-40))
+    let correctFormatPubKey = publicKey
+    if (publicKey.slice(0,4) !== '0x04') {
+      if (publicKey.slice(0,2) === '04') {
+        // assume only 0x forgotten
+        correctFormatPubKey = '0x' + publicKey
+      } else {
+        correctFormatPubKey = '0x04' + publicKey
+      }
+    }
+    return ethers.utils.computeAddress(correctFormatPubKey)
   }
 
   /**
@@ -111,7 +125,7 @@ export class LocalCryptUtils implements CryptUtil {
    * @return string the new derived public extended key
    */
   public derivePublicExtendedKey (account: number, keyId: number): string {
-    return this._hdkey.derive(this.getPath(account, keyId)).publicExtendedKey
+    return this.deriveHdNodeItemWithAccountAndKeyId(account, keyId, HdNodeItem.PublicExtendedKey)
   }
 
   /**
@@ -120,7 +134,7 @@ export class LocalCryptUtils implements CryptUtil {
    * @return string the new derived public extended key
    */
   public derivePublicExtendedKeyFromPath (path: string): string {
-    return this._hdkey.derive(path).publicExtendedKey
+    return this.deriveHdNodeItemWithPath(path, HdNodeItem.PublicExtendedKey)
   }
 
   /**
@@ -129,7 +143,7 @@ export class LocalCryptUtils implements CryptUtil {
    * @return string the new derived private extended key
    */
   public derivePrivateKeyFromPath (path: string): string {
-    return this._hdkey.derive(path).privateKey.toString('hex')
+    return this.deriveHdNodeItemWithPath(path, HdNodeItem.PrivateKey)
   }
 
   /**
@@ -139,24 +153,33 @@ export class LocalCryptUtils implements CryptUtil {
    * @param payload the payload which will be signed
    * @return string the signature
    */
-  public signPayload (account: number, keyId: number, payload: string): string {
-    const childHdkey = this._hdkey.derive(this.getPath(account, keyId))
-    const hashBuf = Buffer.from(keccak256.digest(payload))
-    return childHdkey.sign(hashBuf).toString('hex')
+  public signPayload (account: number, keyId: number, message: string): string {
+    const childPrivateKey = this.deriveHdNodeItemWithAccountAndKeyId(account, keyId, HdNodeItem.PrivateKey)
+    const messageBytes = ethers.utils.toUtf8Bytes(message)
+    const messageDigest = ethers.utils.keccak256(messageBytes)
+    const signingKey = new ethers.utils.SigningKey(childPrivateKey)
+    return ethers.utils.joinSignature(signingKey.signDigest(messageDigest))
   }
 
   /**
    * Verifies that the signature over a payload is set by the owner of the publicKey
    * @param payload the payload which will be signed
-   * @param publicKey the public key from the signer
+   * @param address the address from the signer
    * @param signature the signature from the signer
    * @return boolean whether the payload is valid or not
    */
-  public verifyPayload (payload: string, publicKey: string, signature: string): boolean {
-    const hash = Buffer.from(keccak256.digest(payload))
-    const signatureBuf = Buffer.from(signature, 'hex')
-    const buf = Buffer.from(('04' + publicKey.replace(/^0x/, '')), 'hex')
-    return secp256k1.verify(hash, signatureBuf, buf)
+  public verifyPayload (message: string, addressOrPublicKey: string, signature: string): boolean {
+    const messageBytes = ethers.utils.toUtf8Bytes(message)
+    const messageDigest = ethers.utils.keccak256(messageBytes)
+    let res = false
+    try {
+      const address: string = (addressOrPublicKey.length > 42) ? ethers.utils.computeAddress(addressOrPublicKey) : addressOrPublicKey
+      res = ethers.utils.recoverAddress(messageDigest, signature) === address
+    } catch {
+      // Leave result false when error
+    }
+
+    return res
   }
 
   /**
@@ -170,23 +193,32 @@ export class LocalCryptUtils implements CryptUtil {
     return `m/44'/60'/${account}'/0'/${keyId}'`
   }
 
-  /**
-   * Determine the checksum address variant
-   * @param address the address to be converted to a checksumaddress
-   * @return a checksummed address
-   */
-  private toChecksumAddress (address: string): string {
-    const hash = keccak256(address)
-    let ret = '0x'
+  private deriveHdNodeItemWithAccountAndKeyId (account: number, keyId: number, item: HdNodeItem): string {
+    return this.deriveHdNodeItemWithPath(this.getPath(account, keyId), item)
+  }
 
-    for (let i = 0; i < address.length; i++) {
-      if (parseInt(hash[i], 16) >= 8) {
-        ret += address[i].toUpperCase()
-      } else {
-        ret += address[i]
+  private deriveHdNodeItemWithPath (path: string, item: HdNodeItem): string {
+    let ret = ''
+    if (this._hdnode) {
+      const derivedNode = this._hdnode.derivePath(path)
+      switch (item) {
+        case HdNodeItem.PrivateKey:
+          ret = derivedNode.privateKey
+          break
+        case HdNodeItem.PublicKey:
+          const compressedPublicKey = derivedNode.publicKey
+          ret = ethers.utils.computePublicKey(compressedPublicKey, false)
+          break
+        case HdNodeItem.PublicExtendedKey:
+          ret = derivedNode.neuter().extendedKey
+          break
+        case HdNodeItem.Address:
+          ret = derivedNode.address
       }
+    } else {
+      throw (new Error('No MasterPrivateKey instantiated'))
     }
-
     return ret
   }
+
 }

@@ -76,9 +76,9 @@ export interface CryptUtil {
     /**
      * Verifies that the signature over a payload is set by the owner of the publicKey
      * @param payload the payload which will be signed
-     * @param publicKey the public key from the signer
+     * @param addressOrPublicKey the address or the public key from the signer
      * @param signature the signature from the signer
      * @return boolean whether the payload is valid or not
      */
-    verifyPayload(payload: string, publicKey: string, signature: string): boolean;
+    verifyPayload(payload: string, addressOrPublicKey: string, signature: string): boolean;
 }

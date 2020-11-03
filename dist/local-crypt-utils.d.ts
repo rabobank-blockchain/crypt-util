@@ -1,12 +1,12 @@
 import { CryptUtil } from './interface/crypt-util';
 export declare class LocalCryptUtils implements CryptUtil {
-    private _hdkey;
+    private _hdnode;
     /**
      * Shows what kind of cryptographic algorithm is
      * using this instance.
      * @return string
      */
-    readonly algorithmName: string;
+    get algorithmName(): string;
     /**
      * Creates the master private key, which can be exported for local storage
      */
@@ -74,15 +74,15 @@ export declare class LocalCryptUtils implements CryptUtil {
      * @param payload the payload which will be signed
      * @return string the signature
      */
-    signPayload(account: number, keyId: number, payload: string): string;
+    signPayload(account: number, keyId: number, message: string): string;
     /**
      * Verifies that the signature over a payload is set by the owner of the publicKey
      * @param payload the payload which will be signed
-     * @param publicKey the public key from the signer
+     * @param address the address from the signer
      * @param signature the signature from the signer
      * @return boolean whether the payload is valid or not
      */
-    verifyPayload(payload: string, publicKey: string, signature: string): boolean;
+    verifyPayload(message: string, addressOrPublicKey: string, signature: string): boolean;
     /**
      * Determine the correct getPath for Ethereum like key
      * for this specific account(id) and key(id)
@@ -91,10 +91,6 @@ export declare class LocalCryptUtils implements CryptUtil {
      * @return string the new path
      */
     private getPath;
-    /**
-     * Determine the checksum address variant
-     * @param address the address to be converted to a checksumaddress
-     * @return a checksummed address
-     */
-    private toChecksumAddress;
+    private deriveHdNodeItemWithAccountAndKeyId;
+    private deriveHdNodeItemWithPath;
 }
